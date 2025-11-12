@@ -1,0 +1,1693 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>University Management Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      /* Inter Font */
+      @import url("https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap");
+
+      :root {
+        font-family: "Inter", sans-serif;
+      }
+
+      /* Custom Styles for Visual Enhancement */
+      .tab-link {
+        color: #64748b; /* slate-500 */
+        font-weight: 500;
+        transition: all 0.2s;
+        padding-bottom: 1.25rem !important; /* Slightly more space for the active indicator */
+      }
+      .tab-active {
+        border-bottom-color: #4f46e5 !important; /* indigo-600 */
+        color: #4f46e5 !important;
+        font-weight: 600 !important;
+      }
+      .table-row:hover {
+        background-color: #f3f4f6; /* gray-100 */
+      }
+      .btn-action,
+      .btn-primary {
+        transition: all 0.2s ease-out;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+      }
+      .btn-primary:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      }
+      .page-content {
+        display: none;
+      }
+      .modal {
+        transition: opacity 0.25s ease;
+      }
+      .modal-content {
+        transition: transform 0.25s ease;
+      }
+    </style>
+  </head>
+  <body class="bg-slate-50 font-sans antialiased">
+    <!-- Message/Toast Container (Kept for form submission success/failure) -->
+    <div id="message-container" class="fixed top-0 right-0 p-4 z-[100]"></div>
+
+    <div class="container mx-auto p-4 sm:p-8 lg:p-10 max-w-7xl">
+      <header class="mb-8">
+        <h1 class="text-5xl font-extrabold text-indigo-800 mb-2">
+          🏛️ University Management System
+        </h1>
+        <p class="text-lg text-slate-500 mb-4">
+          Streamlining student data, course registrations, and grade tracking.
+        </p>
+
+        <!-- MODIFIED: Connection Status Bar (Only Server Status remains) -->
+        <div class="flex flex-wrap gap-4 text-sm font-medium">
+          <span class="inline-flex items-center">
+            <span
+              class="w-2.5 h-2.5 rounded-full mr-2"
+              id="api-status-dot"
+            ></span>
+            Server Status:
+            <span id="api-status-text" class="ml-1">Checking...</span>
+          </span>
+          <!-- Removed Database Status -->
+        </div>
+      </header>
+
+      <div class="bg-white rounded-2xl shadow-2xl overflow-hidden">
+        <nav class="border-b border-gray-200 bg-gray-50/50">
+          <ul class="flex flex-wrap -mb-px" id="main-tabs">
+            <li class="mr-2">
+              <button
+                class="tab-link inline-block p-5 border-b-4 border-transparent text-slate-600 hover:text-indigo-600 transition duration-150"
+                data-target="#page-report"
+              >
+                🎓 Grade Report
+              </button>
+            </li>
+            <li class="mr-2">
+              <button
+                class="tab-link inline-block p-5 border-b-4 border-transparent text-slate-600 hover:text-indigo-600 transition duration-150"
+                data-target="#page-students"
+              >
+                👥 Students
+              </button>
+            </li>
+            <li class="mr-2">
+              <button
+                class="tab-link inline-block p-5 border-b-4 border-transparent text-slate-600 hover:text-indigo-600 transition duration-150"
+                data-target="#page-courses"
+              >
+                📚 Courses
+              </button>
+            </li>
+            <li class="mr-2">
+              <button
+                class="tab-link inline-block p-5 border-b-4 border-transparent text-slate-600 hover:text-indigo-600 transition duration-150"
+                data-target="#page-enrollments"
+              >
+                📝 Enrollments
+              </button>
+            </li>
+            <li class="mr-2">
+              <button
+                class="tab-link inline-block p-5 border-b-4 border-transparent text-slate-600 hover:text-indigo-600 transition duration-150"
+                data-target="#page-grades"
+              >
+                🅰️ Grades
+              </button>
+            </li>
+          </ul>
+        </nav>
+
+        <div id="page-content-wrapper">
+          <!-- 1. Grade Report Page -->
+          <div id="page-report" class="page-content p-6 sm:p-8">
+            <div
+              class="flex flex-col sm:flex-row justify-between sm:items-center mb-6 gap-4"
+            >
+              <h2 class="text-3xl font-bold text-indigo-700">
+                Final Grade Report Lookup
+              </h2>
+              <form id="form-search-report" class="flex gap-3">
+                <input
+                  type="number"
+                  id="search-student-id"
+                  placeholder="Search by Student ID..."
+                  class="p-2 border border-gray-300 rounded-lg w-full sm:w-64 focus:ring-indigo-500 focus:border-indigo-500 transition"
+                />
+                <button
+                  type="submit"
+                  class="btn-primary bg-indigo-600 text-white px-4 py-2 rounded-lg shadow-md hover:bg-indigo-700 transition-all duration-150 ease-in-out transform active:scale-[0.98]"
+                >
+                  Search
+                </button>
+                <button
+                  type="button"
+                  id="clear-search-btn"
+                  class="bg-gray-500 text-white px-4 py-2 rounded-lg shadow-md hover:bg-gray-600 transition-all duration-150 ease-in-out transform active:scale-[0.98]"
+                >
+                  Clear
+                </button>
+              </form>
+            </div>
+            <div class="overflow-x-auto border border-gray-200 rounded-lg">
+              <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-100">
+                  <tr>
+                    <th
+                      class="p-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
+                    >
+                      Student Name
+                    </th>
+                    <th
+                      class="p-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
+                    >
+                      Course Name
+                    </th>
+                    <th
+                      class="p-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
+                    >
+                      Final Grade
+                    </th>
+                  </tr>
+                </thead>
+                <tbody
+                  id="table-report-body"
+                  class="bg-white divide-y divide-gray-100"
+                >
+                  <tr>
+                    <td colspan="3" class="p-4 text-center text-gray-500">
+                      Loading data...
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 2. Students Page -->
+          <div id="page-students" class="page-content p-6 sm:p-8">
+            <h2 class="text-3xl font-bold text-indigo-700 mb-6">
+              Manage Students
+            </h2>
+            <form
+              id="form-add-student"
+              class="mb-8 bg-indigo-50/50 p-6 rounded-xl shadow-inner grid grid-cols-1 sm:grid-cols-4 gap-4 items-end"
+            >
+              <input
+                type="text"
+                id="student-name"
+                placeholder="Student Name (e.g., Jane Doe)"
+                class="col-span-2 p-3 border border-indigo-200 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition"
+                required
+              />
+              <input
+                type="number"
+                id="student-year"
+                placeholder="Enrollment Year (e.g., 2024)"
+                class="col-span-1 p-3 border border-indigo-200 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition"
+                required
+              />
+              <button
+                type="submit"
+                id="student-submit-btn"
+                class="col-span-1 btn-primary bg-indigo-600 text-white p-3 rounded-lg shadow-md hover:bg-indigo-700 transition"
+              >
+                + Add Student
+              </button>
+            </form>
+            <div class="overflow-x-auto border border-gray-200 rounded-lg">
+              <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-100">
+                  <tr>
+                    <th
+                      class="p-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
+                    >
+                      Student ID
+                    </th>
+                    <th
+                      class="p-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
+                    >
+                      Name
+                    </th>
+                    <th
+                      class="p-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
+                    >
+                      Year
+                    </th>
+                    <th
+                      class="p-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
+                    >
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody
+                  id="table-students-body"
+                  class="bg-white divide-y divide-gray-100 [&>tr:nth-child(even)]:bg-gray-50"
+                ></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 3. Courses Page -->
+          <div id="page-courses" class="page-content p-6 sm:p-8">
+            <h2 class="text-3xl font-bold text-indigo-700 mb-6">
+              Manage Courses
+            </h2>
+            <form
+              id="form-add-course"
+              class="mb-8 bg-indigo-50/50 p-6 rounded-xl shadow-inner grid grid-cols-1 sm:grid-cols-4 gap-4 items-end"
+            >
+              <input
+                type="text"
+                id="course-id"
+                placeholder="Course ID (e.g., CS-101)"
+                class="col-span-1 p-3 border border-indigo-200 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition"
+                required
+              />
+              <input
+                type="text"
+                id="course-name"
+                placeholder="Course Name (e.g., Intro to CS)"
+                class="col-span-1 p-3 border border-indigo-200 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition"
+                required
+              />
+              <input
+                type="number"
+                id="course-credits"
+                placeholder="Credits"
+                class="col-span-1 p-3 border border-indigo-200 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition"
+                required
+              />
+              <button
+                type="submit"
+                id="course-submit-btn"
+                class="col-span-1 btn-primary bg-indigo-600 text-white p-3 rounded-lg shadow-md hover:bg-indigo-700 transition"
+              >
+                + Add Course
+              </button>
+            </form>
+            <div class="overflow-x-auto border border-gray-200 rounded-lg">
+              <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-100">
+                  <tr>
+                    <th
+                      class="p-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
+                    >
+                      Course ID
+                    </th>
+                    <th
+                      class="p-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
+                    >
+                      Name
+                    </th>
+                    <th
+                      class="p-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
+                    >
+                      Credits
+                    </th>
+                    <th
+                      class="p-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
+                    >
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody
+                  id="table-courses-body"
+                  class="bg-white divide-y divide-gray-100 [&>tr:nth-child(even)]:bg-gray-50"
+                ></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 4. Enrollments Page -->
+          <div id="page-enrollments" class="page-content p-6 sm:p-8">
+            <div
+              class="flex flex-col sm:flex-row justify-between sm:items-center mb-6 gap-4"
+            >
+              <h2 class="text-3xl font-bold text-indigo-700">
+                Manage Enrollments
+              </h2>
+              <form id="form-search-enrollment" class="flex gap-3">
+                <input
+                  type="number"
+                  id="search-enrollment-student-id"
+                  placeholder="Search by Student ID..."
+                  class="p-2 border border-gray-300 rounded-lg w-full sm:w-64 focus:ring-indigo-500 focus:border-indigo-500 transition"
+                />
+                <button
+                  type="submit"
+                  class="btn-primary bg-indigo-600 text-white px-4 py-2 rounded-lg shadow-md hover:bg-indigo-700 transition-all duration-150 ease-in-out transform active:scale-[0.98]"
+                >
+                  Search
+                </button>
+                <button
+                  type="button"
+                  id="clear-enrollment-search-btn"
+                  class="bg-gray-500 text-white px-4 py-2 rounded-lg shadow-md hover:bg-gray-600 transition-all duration-150 ease-in-out transform active:scale-[0.98]"
+                >
+                  Clear
+                </button>
+              </form>
+            </div>
+            <form
+              id="form-add-enrollment"
+              class="mb-8 bg-indigo-50/50 p-6 rounded-xl shadow-inner grid grid-cols-1 sm:grid-cols-3 gap-4 items-end"
+            >
+              <input
+                type="number"
+                id="enroll-student-id"
+                placeholder="Student ID"
+                class="col-span-1 p-3 border border-indigo-200 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition"
+                required
+              />
+              <select
+                id="enroll-course-id"
+                class="col-span-1 p-3 border border-indigo-200 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition bg-white"
+                required
+              >
+                <option value="">-- Loading Courses... --</option>
+              </select>
+              <button
+                type="submit"
+                id="enrollment-submit-btn"
+                class="col-span-1 btn-primary bg-indigo-600 text-white p-3 rounded-lg shadow-md hover:bg-indigo-700 transition"
+              >
+                + Add Enrollment
+              </button>
+            </form>
+            <div class="overflow-x-auto border border-gray-200 rounded-lg">
+              <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-100">
+                  <tr>
+                    <th
+                      class="p-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
+                    >
+                      Enroll. ID
+                    </th>
+                    <th
+                      class="p-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
+                    >
+                      Student Name
+                    </th>
+                    <th
+                      class="p-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
+                    >
+                      Course Name
+                    </th>
+                    <th
+                      class="p-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
+                    >
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody
+                  id="table-enrollments-body"
+                  class="bg-white divide-y divide-gray-100 [&>tr:nth-child(even)]:bg-gray-50"
+                ></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 5. Grades Page -->
+          <div id="page-grades" class="page-content p-6 sm:p-8">
+            <h2 class="text-3xl font-bold text-indigo-700 mb-6">
+              Manage Grades
+            </h2>
+            <form
+              id="form-add-grade"
+              class="mb-8 bg-indigo-50/50 p-6 rounded-xl shadow-inner grid grid-cols-1 sm:grid-cols-3 gap-4 items-end"
+            >
+              <input
+                type="number"
+                id="grade-enrollment-id"
+                placeholder="Enrollment ID"
+                class="col-span-1 p-3 border border-indigo-200 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition"
+                required
+              />
+              <select
+                id="grade-value"
+                class="col-span-1 p-3 border border-indigo-200 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition bg-white"
+                required
+              >
+                <option value="">-- Select Grade --</option>
+                <option value="A+">A+</option>
+                <option value="A">A</option>
+                <option value="A-">A-</option>
+                <option value="B+">B+</option>
+                <option value="B">B</option>
+                <option value="B-">B-</option>
+                <option value="C+">C+</option>
+                <option value="C">C</option>
+                <option value="C-">C-</option>
+                <option value="D">D</option>
+                <option value="F">F</option>
+              </select>
+              <button
+                type="submit"
+                id="grade-submit-btn"
+                class="col-span-1 btn-primary bg-indigo-600 text-white p-3 rounded-lg shadow-md hover:bg-indigo-700 transition"
+              >
+                + Add Grade
+              </button>
+            </form>
+            <div class="overflow-x-auto border border-gray-200 rounded-lg">
+              <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-100">
+                  <tr>
+                    <th
+                      class="p-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
+                    >
+                      Grade ID
+                    </th>
+                    <th
+                      class="p-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
+                    >
+                      Enrollment (Student - Course)
+                    </th>
+                    <th
+                      class="p-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
+                    >
+                      Grade
+                    </th>
+                    <th
+                      class="p-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
+                    >
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody
+                  id="table-grades-body"
+                  class="bg-white divide-y divide-gray-100 [&>tr:nth-child(even)]:bg-gray-50"
+                ></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <footer class="text-center text-slate-500 text-sm mt-10">
+        © 2025 University Management System.
+      </footer>
+    </div>
+
+    <!-- Modal Structure (omitted for brevity) -->
+    <div
+      id="modal-backdrop"
+      class="modal fixed inset-0 bg-gray-900 bg-opacity-50 z-40 hidden opacity-0"
+    ></div>
+    <div
+      id="update-modal"
+      class="modal fixed inset-0 z-50 flex items-center justify-center p-4 hidden opacity-0"
+    >
+      <div
+        class="modal-content bg-white w-full max-w-md p-6 rounded-xl shadow-3xl transform scale-95"
+      >
+        <div class="flex justify-between items-center border-b pb-3 mb-4">
+          <h3 id="modal-title" class="text-2xl font-bold text-indigo-700">
+            Update Item
+          </h3>
+          <button
+            id="modal-close-btn"
+            class="text-gray-400 hover:text-gray-600 transition"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-6 w-6"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+        </div>
+        <div id="modal-body">
+          <!-- Update forms will be injected here -->
+        </div>
+      </div>
+    </div>
+
+    <!-- HTML Templates (omitted for brevity) -->
+    <template id="row-template"
+      ><tr class="table-row transition duration-100"></tr
+    ></template>
+    <template id="cell-template"
+      ><td class="p-4 text-sm text-gray-800 whitespace-nowrap"></td
+    ></template>
+
+    <template id="delete-button-template">
+      <button
+        class="btn-delete btn-action text-red-500 hover:text-red-700 transition ml-2 p-1 rounded-full"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-5 w-5"
+          viewBox="0 0 20 20"
+          fill="currentColor"
+        >
+          <path
+            fill-rule="evenodd"
+            d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
+            clip-rule="evenodd"
+          />
+        </svg>
+      </button>
+    </template>
+    <template id="update-button-template">
+      <button
+        class="btn-update btn-action text-indigo-500 hover:text-indigo-700 transition p-1 rounded-full"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-5 w-5"
+          viewBox="0 0 20 20"
+          fill="currentColor"
+        >
+          <path
+            d="M13.586 3.586a2 2 0 112.828 2.828l-1.121 1.122L11 3l1.121-1.121a.5.5 0 01.707 0l1.757 1.757zm-1.414 1.414L3 14.121V17h2.879L15.172 7.707l-4-4z"
+          />
+        </svg>
+      </button>
+    </template>
+
+    <!-- Update Form Templates (omitted for brevity) -->
+    <template id="student-update-form-template">
+      <form id="form-update-student" class="space-y-4">
+        <input type="hidden" id="update-student-id" />
+        <div>
+          <label
+            for="update-student-name"
+            class="block text-sm font-medium text-gray-700"
+            >Student Name</label
+          >
+          <input
+            type="text"
+            id="update-student-name"
+            class="mt-1 p-3 border border-gray-300 rounded-lg w-full focus:ring-indigo-500 focus:border-indigo-500"
+            required
+          />
+        </div>
+        <div>
+          <label
+            for="update-student-year"
+            class="block text-sm font-medium text-gray-700"
+            >Enrollment Year</label
+          >
+          <input
+            type="number"
+            id="update-student-year"
+            class="mt-1 p-3 border border-gray-300 rounded-lg w-full focus:ring-indigo-500 focus:border-indigo-500"
+            required
+          />
+        </div>
+        <div class="flex justify-end gap-3 pt-4 border-t">
+          <button
+            type="button"
+            class="btn-modal-cancel bg-gray-500 text-white p-3 rounded-lg hover:bg-gray-600 transition btn-action"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            class="btn-primary bg-indigo-600 text-white p-3 rounded-lg hover:bg-indigo-700 transition btn-action"
+          >
+            Update Student
+          </button>
+        </div>
+      </form>
+    </template>
+    <template id="course-update-form-template">
+      <form id="form-update-course" class="space-y-4">
+        <input type="hidden" id="update-course-id" />
+        <div>
+          <label
+            for="update-course-name"
+            class="block text-sm font-medium text-gray-700"
+            >Course Name</label
+          >
+          <input
+            type="text"
+            id="update-course-name"
+            class="mt-1 p-3 border border-gray-300 rounded-lg w-full focus:ring-indigo-500 focus:border-indigo-500"
+            required
+          />
+        </div>
+        <div>
+          <label
+            for="update-course-credits"
+            class="block text-sm font-medium text-gray-700"
+            >Credits</label
+          >
+          <input
+            type="number"
+            id="update-course-credits"
+            class="mt-1 p-3 border border-gray-300 rounded-lg w-full focus:ring-indigo-500 focus:border-indigo-500"
+            required
+          />
+        </div>
+        <div class="flex justify-end gap-3 pt-4 border-t">
+          <button
+            type="button"
+            class="btn-modal-cancel bg-gray-500 text-white p-3 rounded-lg hover:bg-gray-600 transition btn-action"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            class="btn-primary bg-indigo-600 text-white p-3 rounded-lg hover:bg-indigo-700 transition btn-action"
+          >
+            Update Course
+          </button>
+        </div>
+      </form>
+    </template>
+    <template id="enrollment-update-form-template">
+      <form id="form-update-enrollment" class="space-y-4">
+        <input type="hidden" id="update-enrollment-id" />
+        <div>
+          <label
+            for="update-enroll-student-id"
+            class="block text-sm font-medium text-gray-700"
+            >Student ID</label
+          >
+          <input
+            type="number"
+            id="update-enroll-student-id"
+            class="mt-1 p-3 border border-gray-300 rounded-lg w-full focus:ring-indigo-500 focus:border-indigo-500"
+            required
+          />
+        </div>
+        <div>
+          <label
+            for="update-enroll-course-id"
+            class="block text-sm font-medium text-gray-700"
+            >Course</label
+          >
+          <select
+            id="update-enroll-course-id"
+            class="mt-1 p-3 border border-gray-300 rounded-lg w-full focus:ring-indigo-500 focus:border-indigo-500 bg-white"
+            required
+          >
+            <option value="">-- Select Course --</option>
+          </select>
+        </div>
+        <div class="flex justify-end gap-3 pt-4 border-t">
+          <button
+            type="button"
+            class="btn-modal-cancel bg-gray-500 text-white p-3 rounded-lg hover:bg-gray-600 transition btn-action"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            class="btn-primary bg-indigo-600 text-white p-3 rounded-lg hover:bg-indigo-700 transition btn-action"
+          >
+            Update Enrollment
+          </button>
+        </div>
+      </form>
+    </template>
+    <template id="grade-update-form-template">
+      <form id="form-update-grade" class="space-y-4">
+        <input type="hidden" id="update-grade-id" />
+        <div>
+          <label
+            for="update-grade-value"
+            class="block text-sm font-medium text-gray-700"
+            >Grade</label
+          >
+          <select
+            id="update-grade-value"
+            class="mt-1 p-3 border border-gray-300 rounded-lg w-full focus:ring-indigo-500 focus:border-indigo-500 bg-white"
+            required
+          >
+            <option value="">-- Select Grade --</option>
+            <option value="A+">A+</option>
+            <option value="A">A</option>
+            <option value="A-">A-</option>
+            <option value="B+">B+</option>
+            <option value="B">B</option>
+            <option value="B-">B-</option>
+            <option value="C+">C+</option>
+            <option value="C">C</option>
+            <option value="C-">C-</option>
+            <option value="D">D</option>
+            <option value="F">F</option>
+          </select>
+        </div>
+        <div class="flex justify-end gap-3 pt-4 border-t">
+          <button
+            type="button"
+            class="btn-modal-cancel bg-gray-500 text-white p-3 rounded-lg hover:bg-gray-600 transition btn-action"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            class="btn-primary bg-indigo-600 text-white p-3 rounded-lg hover:bg-indigo-700 transition btn-action"
+          >
+            Update Grade
+          </button>
+        </div>
+      </form>
+    </template>
+
+    <!-- 
+      ===============================================================
+      THE JAVASCRIPT IS LEFT FUNCTIONALLY UNCHANGED
+      It continues to use the live API calls.
+      ===============================================================
+    -->
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        // --- API Configuration ---
+        const API_BASE_URL = "http://localhost:3000";
+
+        // --- GLOBAL CACHE ---
+        let localCache = {
+          students: [],
+          courses: [],
+          enrollments: [],
+          grades: [],
+          report: [],
+        };
+
+        // --- DOM Element References ---
+        const mainTabs = document.getElementById("main-tabs");
+        const pageContentWrapper = document.getElementById(
+          "page-content-wrapper"
+        );
+        const reportTableBody = document.getElementById("table-report-body");
+        const studentsTableBody = document.getElementById(
+          "table-students-body"
+        );
+        const coursesTableBody = document.getElementById("table-courses-body");
+        const enrollmentsTableBody = document.getElementById(
+          "table-enrollments-body"
+        );
+        const gradesTableBody = document.getElementById("table-grades-body");
+        const messageContainer = document.getElementById("message-container");
+
+        // NEW STATUS BAR REFERENCES
+        const apiStatusDot = document.getElementById("api-status-dot");
+        const apiStatusText = document.getElementById("api-status-text");
+        // Removed dbStatusDot and dbStatusText references.
+
+        // --- API Helper Function ---
+        // REMOVED showMessage call from the catch block to stop popup flooding
+        async function apiRequest(endpoint, method = "GET", body = null) {
+          const url = `${API_BASE_URL}${endpoint}`;
+          const options = {
+            method: method,
+            headers: {
+              "Content-Type": "application/json",
+            },
+          };
+          if (body) {
+            options.body = JSON.stringify(body);
+          }
+
+          try {
+            const response = await fetch(url, options);
+            if (!response.ok) {
+              const errorText = await response.text();
+              throw new Error(`API Error (${response.status}): ${errorText}`);
+            }
+            if (response.status === 204) {
+              return null;
+            }
+            return await response.json();
+          } catch (error) {
+            console.error(`Failed to ${method} ${endpoint}:`, error);
+            // DO NOT showMessage here, or it will flood the screen during initialization errors.
+            return null;
+          }
+        }
+
+        // --- Template Functions (omitted for brevity) ---
+        function createCell(text, isError = false) {
+          const cell = document
+            .getElementById("cell-template")
+            .content.cloneNode(true)
+            .querySelector("td");
+          if (isError) {
+            cell.innerHTML = `<span class="text-red-500 font-medium">${text}</span>`;
+          } else {
+            cell.textContent = text;
+          }
+          return cell;
+        }
+        function createDeleteButton() {
+          return document
+            .getElementById("delete-button-template")
+            .content.cloneNode(true);
+        }
+        function createUpdateButton() {
+          return document
+            .getElementById("update-button-template")
+            .content.cloneNode(true);
+        }
+        function getGradePill(grade) {
+          let colorClass = "bg-gray-200 text-gray-800";
+          if (["A+", "A", "A-"].includes(grade)) {
+            colorClass = "bg-green-100 text-green-700 font-semibold";
+          } else if (["B+", "B", "B-"].includes(grade)) {
+            colorClass = "bg-yellow-100 text-yellow-700 font-semibold";
+          } else if (["C+", "C", "C-", "D"].includes(grade)) {
+            colorClass = "bg-orange-100 text-orange-700 font-semibold";
+          } else if (grade === "F") {
+            colorClass = "bg-red-100 text-red-700 font-bold";
+          }
+          const span = document.createElement("span");
+          span.className = `inline-flex items-center px-3 py-1.5 rounded-full text-xs transition duration-150 ${colorClass}`;
+          span.textContent = grade;
+
+          const cell = createCell("");
+          cell.appendChild(span);
+          return cell;
+        }
+
+        // --- Modal Control Functions (omitted for brevity) ---
+        const modalBackdrop = document.getElementById("modal-backdrop");
+        const modal = document.getElementById("update-modal");
+        const modalTitle = document.getElementById("modal-title");
+        const modalBody = document.getElementById("modal-body");
+        const modalCloseBtn = document.getElementById("modal-close-btn");
+
+        function openModal(title, contentTemplate) {
+          modalTitle.textContent = title;
+          modalBody.innerHTML = "";
+          const cancelBtn = contentTemplate.querySelector(".btn-modal-cancel");
+          if (cancelBtn) {
+            cancelBtn.addEventListener("click", closeModal);
+          }
+          modalBody.appendChild(contentTemplate);
+          modalBackdrop.classList.remove("hidden");
+          modal.classList.remove("hidden");
+          setTimeout(() => {
+            modalBackdrop.classList.remove("opacity-0");
+            modal.classList.remove("opacity-0");
+            modal.querySelector(".modal-content").classList.remove("scale-95");
+          }, 10);
+        }
+
+        function closeModal() {
+          modalBackdrop.classList.add("opacity-0");
+          modal.classList.add("opacity-0");
+          modal.querySelector(".modal-content").classList.add("scale-95");
+          setTimeout(() => {
+            modalBackdrop.classList.add("hidden");
+            modal.classList.add("hidden");
+            modalBody.innerHTML = "";
+          }, 250);
+        }
+        modalBackdrop.addEventListener("click", closeModal);
+        modalCloseBtn.addEventListener("click", closeModal);
+
+        // --- Render Functions (To update the UI) (omitted for brevity) ---
+
+        // Re-fetches all data from the API and re-renders everything
+        async function renderAll() {
+          console.log("Fetching all data from API...");
+
+          // Fetch all data in parallel
+          const [students, courses, enrollments, grades, report] =
+            await Promise.all([
+              apiRequest("/api/students"),
+              apiRequest("/api/courses"),
+              apiRequest("/api/enrollments"),
+              apiRequest("/api/grades"),
+              apiRequest("/api/gradereport"),
+            ]);
+
+          // Update local cache
+          localCache.students = students || [];
+          localCache.courses = courses || [];
+          localCache.enrollments = enrollments || [];
+          localCache.grades = grades || [];
+          localCache.report = report || [];
+
+          console.log("Re-rendering all tables and forms...");
+          renderReportTable();
+          renderStudentsTable();
+          renderCoursesTable();
+          renderEnrollmentsTable();
+          renderGradesTable();
+          populateCourseDropdowns();
+        }
+
+        function renderReportTable(filterStudentId = null) {
+          reportTableBody.innerHTML = "";
+          let entries = localCache.report;
+
+          if (filterStudentId) {
+            entries = entries.filter((e) => e.StudentId == filterStudentId);
+          }
+
+          if (entries.length === 0) {
+            const row = document.createElement("tr");
+            const cell = createCell(
+              filterStudentId
+                ? "No grade reports found for this student ID."
+                : "No grade report data found.",
+              false
+            );
+            cell.colSpan = 3;
+            cell.classList.add("text-center", "text-gray-500", "p-4");
+            row.appendChild(cell);
+            reportTableBody.appendChild(row);
+            return;
+          }
+
+          entries.forEach((item) => {
+            const row = document
+              .getElementById("row-template")
+              .content.cloneNode(true)
+              .querySelector("tr");
+            row.appendChild(createCell(item.StudentName));
+            row.appendChild(createCell(item.CourseName));
+            row.appendChild(getGradePill(item.grade));
+            reportTableBody.appendChild(row);
+          });
+        }
+
+        function renderStudentsTable() {
+          studentsTableBody.innerHTML = "";
+          if (localCache.students.length === 0) {
+            const row = document.createElement("tr");
+            const cell = createCell("No students recorded.", false);
+            cell.colSpan = 4;
+            cell.classList.add("text-center", "text-gray-500", "p-4");
+            row.appendChild(cell);
+            studentsTableBody.appendChild(row);
+            return;
+          }
+          localCache.students.forEach((s) => {
+            const row = document
+              .getElementById("row-template")
+              .content.cloneNode(true)
+              .querySelector("tr");
+            row.appendChild(createCell(s.student_id));
+            row.appendChild(createCell(s.student_name));
+            row.appendChild(createCell(s.enrollment_year));
+
+            const actionsCell = createCell("");
+            actionsCell.classList.add("flex", "items-center", "gap-1");
+
+            const updateBtn = createUpdateButton();
+            updateBtn.querySelector(".btn-update").onclick = () =>
+              populateStudentUpdateForm(s);
+            actionsCell.appendChild(updateBtn);
+
+            const deleteBtn = createDeleteButton();
+            deleteBtn.querySelector(".btn-delete").onclick = async () => {
+              if (
+                await confirmAction(
+                  "Are you sure you want to delete this student?"
+                )
+              ) {
+                await apiRequest(`/api/students/${s.student_id}`, "DELETE");
+                renderAll();
+              }
+            };
+            actionsCell.appendChild(deleteBtn);
+
+            row.appendChild(actionsCell);
+            studentsTableBody.appendChild(row);
+          });
+        }
+
+        function renderCoursesTable() {
+          coursesTableBody.innerHTML = "";
+          if (localCache.courses.length === 0) {
+            const row = document.createElement("tr");
+            const cell = createCell("No courses recorded.", false);
+            cell.colSpan = 4;
+            cell.classList.add("text-center", "text-gray-500", "p-4");
+            row.appendChild(cell);
+            coursesTableBody.appendChild(row);
+            return;
+          }
+          localCache.courses.forEach((c) => {
+            const row = document
+              .getElementById("row-template")
+              .content.cloneNode(true)
+              .querySelector("tr");
+            row.appendChild(createCell(c.course_id));
+            row.appendChild(createCell(c.course_name));
+            row.appendChild(createCell(c.credits));
+
+            const actionsCell = createCell("");
+            actionsCell.classList.add("flex", "items-center", "gap-1");
+
+            const updateBtn = createUpdateButton();
+            updateBtn.querySelector(".btn-update").onclick = () =>
+              populateCourseUpdateForm(c);
+            actionsCell.appendChild(updateBtn);
+
+            const deleteBtn = createDeleteButton();
+            deleteBtn.querySelector(".btn-delete").onclick = async () => {
+              if (
+                await confirmAction(
+                  "Are you sure you want to delete this course?"
+                )
+              ) {
+                await apiRequest(`/api/courses/${c.course_id}`, "DELETE");
+                renderAll();
+              }
+            };
+            actionsCell.appendChild(deleteBtn);
+
+            row.appendChild(actionsCell);
+            coursesTableBody.appendChild(row);
+          });
+        }
+
+        function renderEnrollmentsTable(filterStudentId = null) {
+          enrollmentsTableBody.innerHTML = "";
+
+          let enrollmentsToShow = localCache.enrollments;
+          if (filterStudentId) {
+            enrollmentsToShow = enrollmentsToShow.filter(
+              (e) => e.student_id == filterStudentId
+            );
+          }
+
+          if (enrollmentsToShow.length === 0) {
+            const row = document.createElement("tr");
+            const cell = createCell(
+              filterStudentId
+                ? "No enrollments found for this student ID."
+                : "No enrollments found.",
+              false
+            );
+            cell.colSpan = 4;
+            cell.classList.add("text-center", "text-gray-500", "p-4");
+            row.appendChild(cell);
+            enrollmentsTableBody.appendChild(row);
+            return;
+          }
+
+          enrollmentsToShow.forEach((e) => {
+            const row = document
+              .getElementById("row-template")
+              .content.cloneNode(true)
+              .querySelector("tr");
+            row.appendChild(createCell(e.enrollment_id));
+
+            const studentCell = createCell(
+              e.StudentName || `Invalid Student ID: ${e.student_id}`,
+              !e.StudentName
+            );
+            row.appendChild(studentCell);
+
+            const courseCell = createCell(
+              e.CourseName || `Invalid Course ID: ${e.course_id}`,
+              !e.CourseName
+            );
+            row.appendChild(courseCell);
+
+            const actionsCell = createCell("");
+            actionsCell.classList.add("flex", "items-center", "gap-1");
+
+            const updateBtn = createUpdateButton();
+            updateBtn.querySelector(".btn-update").onclick = () =>
+              populateEnrollmentUpdateForm(e);
+            actionsCell.appendChild(updateBtn);
+
+            const deleteBtn = createDeleteButton();
+            deleteBtn.querySelector(".btn-delete").onclick = async () => {
+              if (
+                await confirmAction(
+                  "Are you sure you want to delete this enrollment?"
+                )
+              ) {
+                await apiRequest(
+                  `/api/enrollments/${e.enrollment_id}`,
+                  "DELETE"
+                );
+                renderAll();
+              }
+            };
+            actionsCell.appendChild(deleteBtn);
+
+            row.appendChild(actionsCell);
+            enrollmentsTableBody.appendChild(row);
+          });
+        }
+
+        function renderGradesTable() {
+          gradesTableBody.innerHTML = "";
+          if (localCache.grades.length === 0) {
+            const row = document.createElement("tr");
+            const cell = createCell("No grades recorded.", false);
+            cell.colSpan = 4;
+            cell.classList.add("text-center", "text-gray-500", "p-4");
+            row.appendChild(cell);
+            gradesTableBody.appendChild(row);
+            return;
+          }
+
+          localCache.grades.forEach((g) => {
+            const row = document
+              .getElementById("row-template")
+              .content.cloneNode(true)
+              .querySelector("tr");
+
+            row.appendChild(createCell(g.grade_id));
+
+            const descCell = createCell("");
+            const sName = g.StudentName
+              ? g.StudentName
+              : `<span class="text-red-500">Invalid Student</span>`;
+            const cName = g.CourseName
+              ? g.CourseName
+              : `<span class="text-red-500">Invalid Course</span>`;
+            descCell.innerHTML = `<span class="font-medium text-indigo-600">${g.enrollment_id}</span> (${sName} - ${cName})`;
+            row.appendChild(descCell);
+
+            row.appendChild(getGradePill(g.grade));
+
+            const actionsCell = createCell("");
+            actionsCell.classList.add("flex", "items-center", "gap-1");
+
+            const updateBtn = createUpdateButton();
+            updateBtn.querySelector(".btn-update").onclick = () =>
+              populateGradeUpdateForm(g);
+            actionsCell.appendChild(updateBtn);
+
+            const deleteBtn = createDeleteButton();
+            deleteBtn.querySelector(".btn-delete").onclick = async () => {
+              if (
+                await confirmAction(
+                  "Are you sure you want to delete this grade?"
+                )
+              ) {
+                await apiRequest(`/api/grades/${g.grade_id}`, "DELETE");
+                renderAll();
+              }
+            };
+            actionsCell.appendChild(deleteBtn);
+
+            row.appendChild(actionsCell);
+            gradesTableBody.appendChild(row);
+          });
+        }
+
+        function populateCourseDropdowns(selectedCourseId = null) {
+          const addSelect = document.getElementById("enroll-course-id");
+          const currentAddVal = addSelect.value;
+          addSelect.innerHTML = '<option value="">-- Select Course --</option>'; // Clear existing
+
+          localCache.courses.forEach((course) => {
+            const option = document.createElement("option");
+            option.value = course.course_id;
+            option.textContent = `${course.course_id} - ${course.course_name}`;
+            addSelect.appendChild(option);
+          });
+          addSelect.value = currentAddVal;
+
+          const updateSelect = document.querySelector(
+            "#update-enroll-course-id"
+          );
+          if (updateSelect) {
+            const currentUpdateVal = selectedCourseId || updateSelect.value;
+            updateSelect.innerHTML =
+              '<option value="">-- Select Course --</option>';
+            localCache.courses.forEach((course) => {
+              const option = document.createElement("option");
+              option.value = course.course_id;
+              option.textContent = `${course.course_id} - ${course.course_name}`;
+              updateSelect.appendChild(option);
+            });
+            updateSelect.value = currentUpdateVal;
+          }
+        }
+
+        // --- Form Populate Functions (for Update Modals) (omitted for brevity) ---
+        function populateStudentUpdateForm(student) {
+          const template = document
+            .getElementById("student-update-form-template")
+            .content.cloneNode(true);
+          template.querySelector("#update-student-id").value =
+            student.student_id;
+          template.querySelector("#update-student-name").value =
+            student.student_name;
+          template.querySelector("#update-student-year").value =
+            student.enrollment_year;
+
+          const form = template.querySelector("form");
+          form.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const updatedStudent = {
+              student_id: student.student_id,
+              student_name: e.currentTarget.querySelector(
+                "#update-student-name"
+              ).value,
+              enrollment_year: parseInt(
+                e.currentTarget.querySelector("#update-student-year").value
+              ),
+            };
+            await apiRequest(
+              `/api/students/${student.student_id}`,
+              "PUT",
+              updatedStudent
+            );
+            renderAll();
+            closeModal();
+            showMessage("Student updated successfully!", "green");
+          });
+
+          openModal(`Update Student (ID: ${student.student_id})`, template);
+        }
+
+        function populateCourseUpdateForm(course) {
+          const template = document
+            .getElementById("course-update-form-template")
+            .content.cloneNode(true);
+          template.querySelector("#update-course-id").value = course.course_id;
+          template.querySelector("#update-course-name").value =
+            course.course_name;
+          template.querySelector("#update-course-credits").value =
+            course.credits;
+
+          const form = template.querySelector("form");
+          form.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const updatedCourse = {
+              course_id: course.course_id,
+              course_name: e.currentTarget.querySelector("#update-course-name")
+                .value,
+              credits: parseInt(
+                e.currentTarget.querySelector("#update-course-credits").value
+              ),
+            };
+            await apiRequest(
+              `/api/courses/${course.course_id}`,
+              "PUT",
+              updatedCourse
+            );
+            renderAll();
+            closeModal();
+            showMessage("Course updated successfully!", "green");
+          });
+
+          openModal(`Update Course (ID: ${course.course_id})`, template);
+        }
+
+        function populateEnrollmentUpdateForm(enrollment) {
+          const template = document
+            .getElementById("enrollment-update-form-template")
+            .content.cloneNode(true);
+          template.querySelector("#update-enrollment-id").value =
+            enrollment.enrollment_id;
+          template.querySelector("#update-enroll-student-id").value =
+            enrollment.student_id;
+
+          const courseSelect = template.querySelector(
+            "#update-enroll-course-id"
+          );
+          courseSelect.innerHTML =
+            '<option value="">-- Select Course --</option>';
+          localCache.courses.forEach((course) => {
+            const option = document.createElement("option");
+            option.value = course.course_id;
+            option.textContent = `${course.course_id} - ${course.course_name}`;
+            courseSelect.appendChild(option);
+          });
+          courseSelect.value = enrollment.course_id;
+
+          const form = template.querySelector("form");
+          form.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const updatedEnrollment = {
+              enrollment_id: enrollment.enrollment_id,
+              student_id: parseInt(
+                e.currentTarget.querySelector("#update-enroll-student-id").value
+              ),
+              course_id: e.currentTarget.querySelector(
+                "#update-enroll-course-id"
+              ).value,
+            };
+            await apiRequest(
+              `/api/enrollments/${enrollment.enrollment_id}`,
+              "PUT",
+              updatedEnrollment
+            );
+            renderAll();
+            closeModal();
+            showMessage("Enrollment updated successfully!", "green");
+          });
+
+          openModal(
+            `Update Enrollment (ID: ${enrollment.enrollment_id})`,
+            template
+          );
+        }
+
+        function populateGradeUpdateForm(grade) {
+          const template = document
+            .getElementById("grade-update-form-template")
+            .content.cloneNode(true);
+          template.querySelector("#update-grade-id").value = grade.grade_id;
+          template.querySelector("#update-grade-value").value = grade.grade;
+
+          const form = template.querySelector("form");
+          form.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const updatedGrade = {
+              grade_id: grade.grade_id,
+              enrollment_id: grade.enrollment_id, // This doesn't change
+              grade: e.currentTarget.querySelector("#update-grade-value").value,
+            };
+            await apiRequest(
+              `/api/grades/${grade.grade_id}`,
+              "PUT",
+              updatedGrade
+            );
+            renderAll();
+            closeModal();
+            showMessage("Grade updated successfully!", "green");
+          });
+
+          openModal(`Update Grade (ID: ${grade.grade_id})`, template);
+        }
+
+        // --- Form Reset Functions (omitted for brevity) ---
+        function resetStudentForm() {
+          document.getElementById("form-add-student").reset();
+        }
+        function resetCourseForm() {
+          document.getElementById("form-add-course").reset();
+        }
+        function resetEnrollmentForm() {
+          document.getElementById("form-add-enrollment").reset();
+        }
+        function resetGradeForm() {
+          document.getElementById("form-add-grade").reset();
+        }
+
+        // --- Tab Navigation (omitted for brevity) ---
+        mainTabs.addEventListener("click", (e) => {
+          if (e.target.classList.contains("tab-link")) {
+            mainTabs
+              .querySelectorAll(".tab-link")
+              .forEach((tab) => tab.classList.remove("tab-active"));
+            pageContentWrapper
+              .querySelectorAll(".page-content")
+              .forEach((page) => (page.style.display = "none"));
+            e.target.classList.add("tab-active");
+            document.querySelector(e.target.dataset.target).style.display =
+              "block";
+          }
+        });
+
+        // --- "Add" Form Event Listeners (omitted for brevity) ---
+        document
+          .getElementById("form-add-student")
+          .addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const newStudent = {
+              student_name: document.getElementById("student-name").value,
+              enrollment_year: parseInt(
+                document.getElementById("student-year").value
+              ),
+            };
+            const result = await apiRequest(
+              "/api/students",
+              "POST",
+              newStudent
+            );
+            if (result) {
+              renderAll();
+              resetStudentForm();
+              showMessage("Student added!", "green");
+            }
+          });
+
+        document
+          .getElementById("form-add-course")
+          .addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const newCourse = {
+              course_id: document.getElementById("course-id").value,
+              course_name: document.getElementById("course-name").value,
+              credits: parseInt(
+                document.getElementById("course-credits").value
+              ),
+            };
+            const result = await apiRequest("/api/courses", "POST", newCourse);
+            if (result) {
+              renderAll();
+              resetCourseForm();
+              showMessage("Course added successfully!", "green");
+            }
+          });
+
+        document
+          .getElementById("form-add-enrollment")
+          .addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const newEnrollment = {
+              student_id: parseInt(
+                document.getElementById("enroll-student-id").value
+              ),
+              course_id: document.getElementById("enroll-course-id").value,
+            };
+            const result = await apiRequest(
+              "/api/enrollments",
+              "POST",
+              newEnrollment
+            );
+            if (result) {
+              renderAll();
+              resetEnrollmentForm();
+              showMessage("Enrollment added!", "green");
+            }
+          });
+
+        document
+          .getElementById("form-add-grade")
+          .addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const newGrade = {
+              enrollment_id: parseInt(
+                document.getElementById("grade-enrollment-id").value
+              ),
+              grade: document.getElementById("grade-value").value,
+            };
+            const result = await apiRequest("/api/grades", "POST", newGrade);
+            if (result) {
+              renderAll();
+              resetGradeForm();
+              showMessage("Grade added!", "green");
+            }
+          });
+
+        // --- Search Form Listeners (omitted for brevity) ---
+        document
+          .getElementById("form-search-report")
+          .addEventListener("submit", (e) => {
+            e.preventDefault();
+            renderReportTable(
+              document.getElementById("search-student-id").value
+            );
+          });
+        document
+          .getElementById("clear-search-btn")
+          .addEventListener("click", () => {
+            document.getElementById("search-student-id").value = "";
+            renderReportTable();
+          });
+
+        document
+          .getElementById("form-search-enrollment")
+          .addEventListener("submit", (e) => {
+            e.preventDefault();
+            renderEnrollmentsTable(
+              document.getElementById("search-enrollment-student-id").value
+            );
+          });
+        document
+          .getElementById("clear-enrollment-search-btn")
+          .addEventListener("click", () => {
+            document.getElementById("search-enrollment-student-id").value = "";
+            renderEnrollmentsTable();
+          });
+
+        // --- Custom Message Functions (Toast and Confirmation) ---
+        function showMessage(message, type) {
+          // Determine colors and icon based on message type
+          let bgColor = type === "red" ? "bg-red-500" : "bg-green-500";
+          let iconSvg =
+            type === "red"
+              ? `<svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.3 16.5c-.77 1.333.192 3 1.732 3z"></path></svg>`
+              : `<svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+
+          const msgBox = document.createElement("div");
+          msgBox.className = `flex items-center p-3 rounded-lg text-white shadow-lg mb-2 transition-all transform opacity-0 translate-x-10 ${bgColor}`;
+          msgBox.innerHTML = `${iconSvg} <span>${message}</span>`;
+
+          messageContainer.appendChild(msgBox);
+
+          // Animate in
+          setTimeout(() => {
+            msgBox.classList.remove("opacity-0", "translate-x-10");
+            msgBox.classList.add("opacity-100", "translate-x-0");
+          }, 10);
+
+          // Animate out and remove
+          setTimeout(() => {
+            msgBox.classList.remove("opacity-100", "translate-x-0");
+            msgBox.classList.add("opacity-0", "translate-x-10");
+            setTimeout(() => {
+              msgBox.remove();
+            }, 300); // Wait for transition
+          }, 3000);
+        }
+
+        // Custom Confirmation Logic using the Modal
+        let confirmationPromise = null;
+        function confirmAction(message) {
+          // Check if confirmation dialog is already open
+          if (confirmationPromise) {
+            return false;
+          }
+
+          const template = document.createElement("div");
+          template.innerHTML = `
+                <div class="space-y-4">
+                    <p class="text-lg text-gray-700 font-medium">${message}</p>
+                    <p class="text-sm text-red-500">This action cannot be undone.</p>
+                    <div class="flex justify-end gap-3 pt-4 border-t">
+                        <button id="cancel-confirm" class="bg-gray-500 text-white p-3 rounded-lg hover:bg-gray-600 transition btn-action">Cancel</button>
+                        <button id="ok-confirm" class="bg-red-600 text-white p-3 rounded-lg hover:bg-red-700 transition btn-action">Confirm Delete</button>
+                    </div>
+                </div>
+            `;
+          const okButton = template.querySelector("#ok-confirm");
+          const cancelButton = template.querySelector("#cancel-confirm");
+
+          // Set up the promise resolver
+          confirmationPromise = new Promise((resolve) => {
+            okButton.onclick = () => {
+              closeModal();
+              resolve(true);
+            };
+            cancelButton.onclick = () => {
+              closeModal();
+              resolve(false);
+            };
+          });
+
+          openModal("Confirm Action", template);
+          return confirmationPromise;
+        }
+
+        // NEW: Status update utility function
+        function setStatus(element, dot, text, isConnected, label) {
+          const color = isConnected ? "green" : "red";
+          const status = isConnected ? "Connected" : "Disconnected";
+          dot.classList.remove("bg-red-500", "bg-green-500", "bg-gray-400");
+          dot.classList.add(isConnected ? "bg-green-500" : "bg-red-500");
+          text.textContent = status;
+          text.classList.remove("text-green-500", "text-red-500");
+          text.classList.add(isConnected ? "text-green-600" : "text-red-600");
+        }
+
+        // Helper function for delay
+        const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+        // --- Initial App Load ---
+        async function initializeApp() {
+          console.log("Fetching initial data from API...");
+
+          // Set initial active tab
+          const firstTab = mainTabs.querySelector(".tab-link");
+          const firstPage = pageContentWrapper.querySelector(".page-content");
+
+          if (firstTab) firstTab.classList.add("tab-active");
+          if (firstPage) firstPage.style.display = "block";
+
+          // Perform Health Check
+          let isApiConnected = false;
+          // let isDatabaseConnected = false; // Removed
+          apiStatusDot.classList.add("bg-gray-400");
+
+          // --- BEGIN MODIFIED HEALTH CHECK LOGIC WITH RETRY ---
+          let statusResult = null;
+
+          // Attempt 1
+          try {
+            const response = await fetch(`${API_BASE_URL}/api/status`);
+            if (response.ok) {
+              isApiConnected = true;
+              statusResult = await response.json();
+            }
+          } catch (error) {
+            // Wait briefly and try again if the connection was refused (Node process may be restarting)
+            await delay(200);
+            try {
+              const response = await fetch(`${API_BASE_URL}/api/status`);
+              if (response.ok) {
+                isApiConnected = true;
+                statusResult = await response.json();
+              }
+            } catch (error) {
+              // Final failure: API server is unreachable
+              isApiConnected = false;
+            }
+          }
+          // --- END MODIFIED HEALTH CHECK LOGIC WITH RETRY ---
+
+          // Update Server Status Display (API Server is now Server Status)
+          setStatus(
+            apiStatusText,
+            apiStatusDot,
+            apiStatusText,
+            isApiConnected,
+            "Server Status"
+          );
+
+          if (isApiConnected) {
+            // Only attempt to render data if the API endpoint responded (even if DB is down)
+            await renderAll();
+            console.log("App initialized.");
+          } else {
+            // Show critical error in tables if API is completely unreachable
+            const criticalErrorHtml =
+              '<tr><td colspan="4" class="p-4 text-center text-red-500 font-bold">CRITICAL: Server is not connected. Cannot load live data.</td></tr>';
+            reportTableBody.innerHTML =
+              '<tr><td colspan="3" class="p-4 text-center text-red-500 font-bold">CRITICAL: Server is not connected. Cannot load live data.</td></tr>';
+            studentsTableBody.innerHTML = criticalErrorHtml;
+            coursesTableBody.innerHTML = criticalErrorHtml;
+            enrollmentsTableBody.innerHTML = criticalErrorHtml;
+            gradesTableBody.innerHTML = criticalErrorHtml;
+
+            // Clear dropdowns if we couldn't load courses
+            document.getElementById("enroll-course-id").innerHTML =
+              '<option value="">-- Connection Failed --</option>';
+          }
+        }
+
+        initializeApp(); // Start the application
+      });
+    </script>
+  </body>
+</html>
