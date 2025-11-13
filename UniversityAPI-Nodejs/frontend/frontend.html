@@ -15,10 +15,10 @@
 
       /* Custom Styles for Visual Enhancement */
       .tab-link {
-        color: #64748b; /* slate-500 */
+        color: #475569; /* slate-600 */
         font-weight: 500;
         transition: all 0.2s;
-        padding-bottom: 1.25rem !important; /* Slightly more space for the active indicator */
+        padding-bottom: 1.25rem !important;
       }
       .tab-active {
         border-bottom-color: #4f46e5 !important; /* indigo-600 */
@@ -26,16 +26,18 @@
         font-weight: 600 !important;
       }
       .table-row:hover {
-        background-color: #f3f4f6; /* gray-100 */
+        background-color: #f7f7f9; /* Lighter hover for contrast */
       }
-      .btn-action,
+      .btn-action {
+        transition: all 0.2s ease-out;
+      }
       .btn-primary {
         transition: all 0.2s ease-out;
-        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+        box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.1);
       }
       .btn-primary:hover {
         transform: translateY(-1px);
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 4px 8px -2px rgba(0, 0, 0, 0.15);
       }
       .page-content {
         display: none;
@@ -45,23 +47,25 @@
       }
       .modal-content {
         transition: transform 0.25s ease;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2);
       }
     </style>
   </head>
-  <body class="bg-slate-50 font-sans antialiased">
-    <!-- Message/Toast Container (Kept for form submission success/failure) -->
+  <body class="bg-gray-100 font-sans antialiased">
+    <!-- Message/Toast Container -->
     <div id="message-container" class="fixed top-0 right-0 p-4 z-[100]"></div>
 
     <div class="container mx-auto p-4 sm:p-8 lg:p-10 max-w-7xl">
       <header class="mb-8">
-        <h1 class="text-5xl font-extrabold text-indigo-800 mb-2">
-          🏛️ University Management System
+        <h1 class="text-4xl sm:text-5xl font-extrabold text-indigo-800 mb-2">
+          🏛️ Khwaja Yunus Ali University
         </h1>
-        <p class="text-lg text-slate-500 mb-4">
-          Streamlining student data, course registrations, and grade tracking.
+        <p class="text-base text-slate-500 mb-4">
+          University Management Dashboard: student data, course registrations,
+          and grade tracking.
         </p>
 
-        <!-- MODIFIED: Connection Status Bar (Only Server Status remains) -->
+        <!-- Connection Status Bar -->
         <div class="flex flex-wrap gap-4 text-sm font-medium">
           <span class="inline-flex items-center">
             <span
@@ -69,18 +73,19 @@
               id="api-status-dot"
             ></span>
             Server Status:
-            <span id="api-status-text" class="ml-1">Checking...</span>
+            <span id="api-status-text" class="ml-1 font-semibold"
+              >Checking...</span
+            >
           </span>
-          <!-- Removed Database Status -->
         </div>
       </header>
 
-      <div class="bg-white rounded-2xl shadow-2xl overflow-hidden">
-        <nav class="border-b border-gray-200 bg-gray-50/50">
+      <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+        <nav class="border-b border-gray-200 bg-white">
           <ul class="flex flex-wrap -mb-px" id="main-tabs">
             <li class="mr-2">
               <button
-                class="tab-link inline-block p-5 border-b-4 border-transparent text-slate-600 hover:text-indigo-600 transition duration-150"
+                class="tab-link inline-block p-5 border-b-4 border-transparent hover:border-gray-300 transition duration-150"
                 data-target="#page-report"
               >
                 🎓 Grade Report
@@ -88,7 +93,7 @@
             </li>
             <li class="mr-2">
               <button
-                class="tab-link inline-block p-5 border-b-4 border-transparent text-slate-600 hover:text-indigo-600 transition duration-150"
+                class="tab-link inline-block p-5 border-b-4 border-transparent hover:border-gray-300 transition duration-150"
                 data-target="#page-students"
               >
                 👥 Students
@@ -96,7 +101,7 @@
             </li>
             <li class="mr-2">
               <button
-                class="tab-link inline-block p-5 border-b-4 border-transparent text-slate-600 hover:text-indigo-600 transition duration-150"
+                class="tab-link inline-block p-5 border-b-4 border-transparent hover:border-gray-300 transition duration-150"
                 data-target="#page-courses"
               >
                 📚 Courses
@@ -104,7 +109,7 @@
             </li>
             <li class="mr-2">
               <button
-                class="tab-link inline-block p-5 border-b-4 border-transparent text-slate-600 hover:text-indigo-600 transition duration-150"
+                class="tab-link inline-block p-5 border-b-4 border-transparent hover:border-gray-300 transition duration-150"
                 data-target="#page-enrollments"
               >
                 📝 Enrollments
@@ -112,7 +117,7 @@
             </li>
             <li class="mr-2">
               <button
-                class="tab-link inline-block p-5 border-b-4 border-transparent text-slate-600 hover:text-indigo-600 transition duration-150"
+                class="tab-link inline-block p-5 border-b-4 border-transparent hover:border-gray-300 transition duration-150"
                 data-target="#page-grades"
               >
                 🅰️ Grades
@@ -127,7 +132,7 @@
             <div
               class="flex flex-col sm:flex-row justify-between sm:items-center mb-6 gap-4"
             >
-              <h2 class="text-3xl font-bold text-indigo-700">
+              <h2 class="text-2xl sm:text-3xl font-bold text-indigo-700">
                 Final Grade Report Lookup
               </h2>
               <form id="form-search-report" class="flex gap-3">
@@ -135,7 +140,7 @@
                   type="number"
                   id="search-student-id"
                   placeholder="Search by Student ID..."
-                  class="p-2 border border-gray-300 rounded-lg w-full sm:w-64 focus:ring-indigo-500 focus:border-indigo-500 transition"
+                  class="p-2.5 border border-gray-300 rounded-lg w-full sm:w-64 focus:ring-indigo-500 focus:border-indigo-500 transition"
                 />
                 <button
                   type="submit"
@@ -146,7 +151,7 @@
                 <button
                   type="button"
                   id="clear-search-btn"
-                  class="bg-gray-500 text-white px-4 py-2 rounded-lg shadow-md hover:bg-gray-600 transition-all duration-150 ease-in-out transform active:scale-[0.98]"
+                  class="bg-gray-500 text-white px-4 py-2 rounded-lg shadow-md hover:bg-red-600 transition-all duration-150 ease-in-out transform active:scale-[0.98]"
                 >
                   Clear
                 </button>
@@ -154,7 +159,7 @@
             </div>
             <div class="overflow-x-auto border border-gray-200 rounded-lg">
               <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-100">
+                <thead class="bg-gray-50">
                   <tr>
                     <th
                       class="p-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
@@ -189,7 +194,7 @@
 
           <!-- 2. Students Page -->
           <div id="page-students" class="page-content p-6 sm:p-8">
-            <h2 class="text-3xl font-bold text-indigo-700 mb-6">
+            <h2 class="text-2xl sm:text-3xl font-bold text-indigo-700 mb-6">
               Manage Students
             </h2>
             <form
@@ -220,7 +225,7 @@
             </form>
             <div class="overflow-x-auto border border-gray-200 rounded-lg">
               <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-100">
+                <thead class="bg-gray-50">
                   <tr>
                     <th
                       class="p-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
@@ -254,7 +259,7 @@
 
           <!-- 3. Courses Page -->
           <div id="page-courses" class="page-content p-6 sm:p-8">
-            <h2 class="text-3xl font-bold text-indigo-700 mb-6">
+            <h2 class="text-2xl sm:text-3xl font-bold text-indigo-700 mb-6">
               Manage Courses
             </h2>
             <form
@@ -292,7 +297,7 @@
             </form>
             <div class="overflow-x-auto border border-gray-200 rounded-lg">
               <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-100">
+                <thead class="bg-gray-50">
                   <tr>
                     <th
                       class="p-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
@@ -329,7 +334,7 @@
             <div
               class="flex flex-col sm:flex-row justify-between sm:items-center mb-6 gap-4"
             >
-              <h2 class="text-3xl font-bold text-indigo-700">
+              <h2 class="text-2xl sm:text-3xl font-bold text-indigo-700">
                 Manage Enrollments
               </h2>
               <form id="form-search-enrollment" class="flex gap-3">
@@ -337,7 +342,7 @@
                   type="number"
                   id="search-enrollment-student-id"
                   placeholder="Search by Student ID..."
-                  class="p-2 border border-gray-300 rounded-lg w-full sm:w-64 focus:ring-indigo-500 focus:border-indigo-500 transition"
+                  class="p-2.5 border border-gray-300 rounded-lg w-full sm:w-64 focus:ring-indigo-500 focus:border-indigo-500 transition"
                 />
                 <button
                   type="submit"
@@ -348,7 +353,7 @@
                 <button
                   type="button"
                   id="clear-enrollment-search-btn"
-                  class="bg-gray-500 text-white px-4 py-2 rounded-lg shadow-md hover:bg-gray-600 transition-all duration-150 ease-in-out transform active:scale-[0.98]"
+                  class="bg-gray-500 text-white px-4 py-2 rounded-lg shadow-md hover:bg-red-600 transition-all duration-150 ease-in-out transform active:scale-[0.98]"
                 >
                   Clear
                 </button>
@@ -382,7 +387,7 @@
             </form>
             <div class="overflow-x-auto border border-gray-200 rounded-lg">
               <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-100">
+                <thead class="bg-gray-50">
                   <tr>
                     <th
                       class="p-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
@@ -416,7 +421,7 @@
 
           <!-- 5. Grades Page -->
           <div id="page-grades" class="page-content p-6 sm:p-8">
-            <h2 class="text-3xl font-bold text-indigo-700 mb-6">
+            <h2 class="text-2xl sm:text-3xl font-bold text-indigo-700 mb-6">
               Manage Grades
             </h2>
             <form
@@ -458,7 +463,7 @@
             </form>
             <div class="overflow-x-auto border border-gray-200 rounded-lg">
               <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-100">
+                <thead class="bg-gray-50">
                   <tr>
                     <th
                       class="p-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
@@ -497,7 +502,7 @@
       </footer>
     </div>
 
-    <!-- Modal Structure (omitted for brevity) -->
+    <!-- Modal Structure -->
     <div
       id="modal-backdrop"
       class="modal fixed inset-0 bg-gray-900 bg-opacity-50 z-40 hidden opacity-0"
@@ -539,8 +544,7 @@
       </div>
     </div>
 
-    <!-- HTML Templates (omitted for brevity) -->
-    <template id="row-template"
+    <!-- HTML Templates --><template id="row-template"
       ><tr class="table-row transition duration-100"></tr
     ></template>
     <template id="cell-template"
@@ -549,7 +553,7 @@
 
     <template id="delete-button-template">
       <button
-        class="btn-delete btn-action text-red-500 hover:text-red-700 transition ml-2 p-1 rounded-full"
+        class="btn-delete btn-action text-red-500 hover:text-red-700 transition ml-2 p-1 rounded-full hover:bg-red-50/50"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -567,7 +571,7 @@
     </template>
     <template id="update-button-template">
       <button
-        class="btn-update btn-action text-indigo-500 hover:text-indigo-700 transition p-1 rounded-full"
+        class="btn-update btn-action text-indigo-500 hover:text-indigo-700 transition p-1 rounded-full hover:bg-indigo-50/50"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -582,8 +586,7 @@
       </button>
     </template>
 
-    <!-- Update Form Templates (omitted for brevity) -->
-    <template id="student-update-form-template">
+    <!-- Update Form Templates --><template id="student-update-form-template">
       <form id="form-update-student" class="space-y-4">
         <input type="hidden" id="update-student-id" />
         <div>
@@ -800,13 +803,11 @@
         const gradesTableBody = document.getElementById("table-grades-body");
         const messageContainer = document.getElementById("message-container");
 
-        // NEW STATUS BAR REFERENCES
+        // STATUS BAR REFERENCES
         const apiStatusDot = document.getElementById("api-status-dot");
         const apiStatusText = document.getElementById("api-status-text");
-        // Removed dbStatusDot and dbStatusText references.
 
         // --- API Helper Function ---
-        // REMOVED showMessage call from the catch block to stop popup flooding
         async function apiRequest(endpoint, method = "GET", body = null) {
           const url = `${API_BASE_URL}${endpoint}`;
           const options = {
@@ -831,7 +832,7 @@
             return await response.json();
           } catch (error) {
             console.error(`Failed to ${method} ${endpoint}:`, error);
-            // DO NOT showMessage here, or it will flood the screen during initialization errors.
+            // We removed the popup showMessage() from here
             return null;
           }
         }
@@ -859,6 +860,7 @@
             .getElementById("update-button-template")
             .content.cloneNode(true);
         }
+        // Creates the colored pill for grades
         function getGradePill(grade) {
           let colorClass = "bg-gray-200 text-gray-800";
           if (["A+", "A", "A-"].includes(grade)) {
@@ -893,6 +895,12 @@
           if (cancelBtn) {
             cancelBtn.addEventListener("click", closeModal);
           }
+          // Also handle custom #cancel-confirm button
+          const customCancelBtn =
+            contentTemplate.querySelector("#cancel-confirm");
+          if (customCancelBtn) {
+            customCancelBtn.addEventListener("click", closeModal);
+          }
           modalBody.appendChild(contentTemplate);
           modalBackdrop.classList.remove("hidden");
           modal.classList.remove("hidden");
@@ -916,7 +924,7 @@
         modalBackdrop.addEventListener("click", closeModal);
         modalCloseBtn.addEventListener("click", closeModal);
 
-        // --- Render Functions (To update the UI) (omitted for brevity) ---
+        // --- Render Functions ---
 
         // Re-fetches all data from the API and re-renders everything
         async function renderAll() {
@@ -978,7 +986,7 @@
               .querySelector("tr");
             row.appendChild(createCell(item.StudentName));
             row.appendChild(createCell(item.CourseName));
-            row.appendChild(getGradePill(item.grade));
+            row.appendChild(getGradePill(item.grade)); // Use the pill
             reportTableBody.appendChild(row);
           });
         }
@@ -1178,7 +1186,7 @@
             descCell.innerHTML = `<span class="font-medium text-indigo-600">${g.enrollment_id}</span> (${sName} - ${cName})`;
             row.appendChild(descCell);
 
-            row.appendChild(getGradePill(g.grade));
+            row.appendChild(getGradePill(g.grade)); // Use the pill
 
             const actionsCell = createCell("");
             actionsCell.classList.add("flex", "items-center", "gap-1");
@@ -1236,7 +1244,7 @@
           }
         }
 
-        // --- Form Populate Functions (for Update Modals) (omitted for brevity) ---
+        // --- Form Populate Functions (for Update Modals) ---
         function populateStudentUpdateForm(student) {
           const template = document
             .getElementById("student-update-form-template")
@@ -1335,14 +1343,35 @@
           form.addEventListener("submit", async (e) => {
             e.preventDefault();
             e.stopPropagation();
+
+            const updatedStudentId = parseInt(
+              e.currentTarget.querySelector("#update-enroll-student-id").value
+            );
+            const updatedCourseId = e.currentTarget.querySelector(
+              "#update-enroll-course-id"
+            ).value;
+
+            // --- THIS IS THE FIX ---
+            const existingDuplicate = localCache.enrollments.find(
+              (en) =>
+                en.student_id === updatedStudentId &&
+                en.course_id === updatedCourseId &&
+                en.enrollment_id !== enrollment.enrollment_id // This is the key
+            );
+
+            if (existingDuplicate) {
+              showMessage(
+                "This student is already enrolled in this course. Cannot update.",
+                "red"
+              );
+              return; // Stop the submission
+            }
+            // --- END OF FIX ---
+
             const updatedEnrollment = {
               enrollment_id: enrollment.enrollment_id,
-              student_id: parseInt(
-                e.currentTarget.querySelector("#update-enroll-student-id").value
-              ),
-              course_id: e.currentTarget.querySelector(
-                "#update-enroll-course-id"
-              ).value,
+              student_id: updatedStudentId,
+              course_id: updatedCourseId,
             };
             await apiRequest(
               `/api/enrollments/${enrollment.enrollment_id}`,
@@ -1423,6 +1452,10 @@
           .getElementById("form-add-student")
           .addEventListener("submit", async (e) => {
             e.preventDefault();
+            const submitBtn = document.getElementById("student-submit-btn");
+            submitBtn.disabled = true;
+            submitBtn.textContent = "Adding...";
+
             const newStudent = {
               student_name: document.getElementById("student-name").value,
               enrollment_year: parseInt(
@@ -1435,16 +1468,24 @@
               newStudent
             );
             if (result) {
-              renderAll();
+              await renderAll();
               resetStudentForm();
               showMessage("Student added!", "green");
+            } else {
+              showMessage("Failed to add student.", "red");
             }
+            submitBtn.disabled = false;
+            submitBtn.textContent = "+ Add Student";
           });
 
         document
           .getElementById("form-add-course")
           .addEventListener("submit", async (e) => {
             e.preventDefault();
+            const submitBtn = document.getElementById("course-submit-btn");
+            submitBtn.disabled = true;
+            submitBtn.textContent = "Adding...";
+
             const newCourse = {
               course_id: document.getElementById("course-id").value,
               course_name: document.getElementById("course-name").value,
@@ -1454,21 +1495,47 @@
             };
             const result = await apiRequest("/api/courses", "POST", newCourse);
             if (result) {
-              renderAll();
+              await renderAll();
               resetCourseForm();
               showMessage("Course added successfully!", "green");
+            } else {
+              showMessage("Failed to add course. Check ID format.", "red");
             }
+            submitBtn.disabled = false;
+            submitBtn.textContent = "+ Add Course";
           });
 
         document
           .getElementById("form-add-enrollment")
           .addEventListener("submit", async (e) => {
             e.preventDefault();
+
+            const submitBtn = document.getElementById("enrollment-submit-btn");
+            submitBtn.disabled = true;
+            submitBtn.textContent = "Enrolling...";
+
+            const studentId = parseInt(
+              document.getElementById("enroll-student-id").value
+            );
+            const courseId = document.getElementById("enroll-course-id").value;
+
+            // --- THIS IS THE FIX ---
+            // Check if this student/course combination already exists in the cache
+            const alreadyEnrolled = localCache.enrollments.find(
+              (en) => en.student_id == studentId && en.course_id == courseId
+            );
+
+            if (alreadyEnrolled) {
+              showMessage("Student is already enrolled in this course.", "red");
+              submitBtn.disabled = false;
+              submitBtn.textContent = "+ Add Enrollment";
+              return; // Stop the submission
+            }
+            // --- END OF FIX ---
+
             const newEnrollment = {
-              student_id: parseInt(
-                document.getElementById("enroll-student-id").value
-              ),
-              course_id: document.getElementById("enroll-course-id").value,
+              student_id: studentId,
+              course_id: courseId,
             };
             const result = await apiRequest(
               "/api/enrollments",
@@ -1476,28 +1543,58 @@
               newEnrollment
             );
             if (result) {
-              renderAll();
+              await renderAll();
               resetEnrollmentForm();
               showMessage("Enrollment added!", "green");
+            } else {
+              showMessage("Failed to add enrollment. Check Student ID.", "red");
             }
+            submitBtn.disabled = false;
+            submitBtn.textContent = "+ Add Enrollment";
           });
 
         document
           .getElementById("form-add-grade")
           .addEventListener("submit", async (e) => {
             e.preventDefault();
+
+            const submitBtn = document.getElementById("grade-submit-btn");
+            submitBtn.disabled = true;
+            submitBtn.textContent = "Adding...";
+
+            const enrollmentId = parseInt(
+              document.getElementById("grade-enrollment-id").value
+            );
+
+            // --- DUPLICATE GRADE CHECK ---
+            const existingGrade = localCache.grades.find(
+              (g) => g.enrollment_id === enrollmentId
+            );
+            if (existingGrade) {
+              showMessage(
+                "This enrollment already has a grade. Use the Edit button to update it.",
+                "red"
+              );
+              submitBtn.disabled = false;
+              submitBtn.textContent = "+ Add Grade";
+              return;
+            }
+            // --- END CHECK ---
+
             const newGrade = {
-              enrollment_id: parseInt(
-                document.getElementById("grade-enrollment-id").value
-              ),
+              enrollment_id: enrollmentId,
               grade: document.getElementById("grade-value").value,
             };
             const result = await apiRequest("/api/grades", "POST", newGrade);
             if (result) {
-              renderAll();
+              await renderAll();
               resetGradeForm();
               showMessage("Grade added!", "green");
+            } else {
+              showMessage("Failed to add grade. Check Enrollment ID.", "red");
             }
+            submitBtn.disabled = false;
+            submitBtn.textContent = "+ Add Grade";
           });
 
         // --- Search Form Listeners (omitted for brevity) ---
@@ -1567,17 +1664,22 @@
         function confirmAction(message) {
           // Check if confirmation dialog is already open
           if (confirmationPromise) {
-            return false;
+            // If a confirmation is already showing, reset the promise and return false
+            confirmationPromise = null;
+            return Promise.resolve(false);
           }
 
           const template = document.createElement("div");
           template.innerHTML = `
-                <div class="space-y-4">
-                    <p class="text-lg text-gray-700 font-medium">${message}</p>
-                    <p class="text-sm text-red-500">This action cannot be undone.</p>
-                    <div class="flex justify-end gap-3 pt-4 border-t">
-                        <button id="cancel-confirm" class="bg-gray-500 text-white p-3 rounded-lg hover:bg-gray-600 transition btn-action">Cancel</button>
-                        <button id="ok-confirm" class="bg-red-600 text-white p-3 rounded-lg hover:bg-red-700 transition btn-action">Confirm Delete</button>
+                <div class="space-y-4 text-center">
+                    <svg class="mx-auto h-16 w-16 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.3 16.5c-.77 1.333.192 3 1.732 3z"></path>
+                    </svg>
+                    <p class="text-xl text-gray-800 font-semibold">${message}</p>
+                    <p class="text-sm text-gray-500">This action cannot be undone and may affect related data.</p>
+                    <div class="flex justify-center gap-4 pt-6 border-t mt-6">
+                        <button id="cancel-confirm" class="bg-green-500 text-white font-semibold py-3 px-6 rounded-lg hover:bg-green-600 transition btn-action min-w-[120px]">Cancel</button>
+                        <button id="ok-confirm" class="bg-red-600 text-white font-semibold py-3 px-6 rounded-lg hover:bg-red-700 transition btn-action min-w-[120px]">Confirm Delete</button>
                     </div>
                 </div>
             `;
@@ -1586,28 +1688,38 @@
 
           // Set up the promise resolver
           confirmationPromise = new Promise((resolve) => {
-            okButton.onclick = () => {
+            const closeAndResolve = (value) => {
               closeModal();
-              resolve(true);
+              confirmationPromise = null; // Clear the promise on close
+              resolve(value);
             };
-            cancelButton.onclick = () => {
-              closeModal();
-              resolve(false);
-            };
+
+            okButton.onclick = () => closeAndResolve(true);
+            cancelButton.onclick = () => closeAndResolve(false);
+
+            // Also resolve false if the main modal X is clicked
+            modalCloseBtn.addEventListener(
+              "click",
+              () => closeAndResolve(false),
+              { once: true }
+            );
+            modalBackdrop.addEventListener(
+              "click",
+              () => closeAndResolve(false),
+              { once: true }
+            );
           });
 
           openModal("Confirm Action", template);
           return confirmationPromise;
         }
 
-        // NEW: Status update utility function
+        // Status update utility function
         function setStatus(element, dot, text, isConnected, label) {
-          const color = isConnected ? "green" : "red";
-          const status = isConnected ? "Connected" : "Disconnected";
           dot.classList.remove("bg-red-500", "bg-green-500", "bg-gray-400");
           dot.classList.add(isConnected ? "bg-green-500" : "bg-red-500");
-          text.textContent = status;
-          text.classList.remove("text-green-500", "text-red-500");
+          text.textContent = isConnected ? "Connected" : "Disconnected";
+          text.classList.remove("text-green-600", "text-red-600");
           text.classList.add(isConnected ? "text-green-600" : "text-red-600");
         }
 
@@ -1627,7 +1739,6 @@
 
           // Perform Health Check
           let isApiConnected = false;
-          // let isDatabaseConnected = false; // Removed
           apiStatusDot.classList.add("bg-gray-400");
 
           // --- BEGIN MODIFIED HEALTH CHECK LOGIC WITH RETRY ---
@@ -1649,14 +1760,15 @@
                 isApiConnected = true;
                 statusResult = await response.json();
               }
-            } catch (error) {
+            } catch (errorTwo) {
               // Final failure: API server is unreachable
+              console.error("API Health Check Failed:", errorTwo);
               isApiConnected = false;
             }
           }
           // --- END MODIFIED HEALTH CHECK LOGIC WITH RETRY ---
 
-          // Update Server Status Display (API Server is now Server Status)
+          // Update Server Status Display
           setStatus(
             apiStatusText,
             apiStatusDot,
@@ -1665,16 +1777,24 @@
             "Server Status"
           );
 
+          // --- ADDED POPUP MESSAGE ---
           if (isApiConnected) {
-            // Only attempt to render data if the API endpoint responded (even if DB is down)
+            showMessage("Server Status: Connected", "green");
+          } else {
+            showMessage("Server Status: Disconnected.", "red");
+          }
+          // --- END POPUP MESSAGE ---
+
+          if (isApiConnected) {
+            // Only attempt to render data if the API endpoint responded (even if DB is down, it's irrelevant now)
             await renderAll();
             console.log("App initialized.");
           } else {
             // Show critical error in tables if API is completely unreachable
             const criticalErrorHtml =
-              '<tr><td colspan="4" class="p-4 text-center text-red-500 font-bold">CRITICAL: Server is not connected. Cannot load live data.</td></tr>';
+              '<tr><td colspan="4" class="p-4 text-center text-red-500 font-bold">CRITICAL: Server is unreachable. Cannot load live data.</td></tr>';
             reportTableBody.innerHTML =
-              '<tr><td colspan="3" class="p-4 text-center text-red-500 font-bold">CRITICAL: Server is not connected. Cannot load live data.</td></tr>';
+              '<tr><td colspan="3" class="p-4 text-center text-red-500 font-bold">CRITICAL: Server is unreachable. Cannot load live data.</td></tr>';
             studentsTableBody.innerHTML = criticalErrorHtml;
             coursesTableBody.innerHTML = criticalErrorHtml;
             enrollmentsTableBody.innerHTML = criticalErrorHtml;
